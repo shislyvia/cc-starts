@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN"></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="""""width=device-width, initial-scale=""""1.0">
+    <title>橙's Stars</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .starry-background{
+            display: none;
+        }
+        .star-container {
+            position: absolute;
+            z-index: 2; /* 确保五角星在上层 */
+            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .text-particle {
+            position: absolute;
+            font-size: 12px;
+            opacity: 0;
+            user-select: none;
+            will-change: transform, color, text-shadow;
+        }
+        
+        /* 梦幻颜色主题 */
+        .color-theme-1 {
+            color: #ffb6f3;
+            text-shadow: 0 0 5px #ff8aec, 0 0 10px #ff8aec, 0 0 15px #c651b9;
+        }
+        
+        .color-theme-2 {
+            color: #90e0ff;
+            text-shadow: 0 0 5px #61c6ff, 0 0 10px #61c6ff, 0 0 15px #4d94ff;
+        }
+        
+        .color-theme-3 {
+            color: #b6ffda;
+            text-shadow: 0 0 5px #7fffbe, 0 0 10px #7fffbe, 0 0 15px #51c78d;
+        }
+        
+        .color-theme-4 {
+            color: #ffe278;
+            text-shadow: 0 0 5px #ffcf45, 0 0 10px #ffcf45, 0 0 15px #d99e1f;
+        }
+        
+        .color-theme-5 {
+            color: #d7a4ff;
+            text-shadow: 0 0 5px #b85fff, 0 0 10px #b85fff, 0 0 15px #9141de;
+        }
+        
+        .color-theme-6 {
+            color: #ff9ab2;
+            text-shadow: 0 0 5px #ff6b8e, 0 0 10px #ff6b8e, 0 0 15px #e24a6f;
+        }
+        
+        /* 梦幻闪烁动画 */
+        @keyframes twinkle-1 {
+            0%, 100% { opacity: 1; filter: brightness(1.2); }
+            33% { opacity: 0.7; filter: brightness(1.0); }
+            66% { opacity: 0.9; filter: brightness(1.1); }
+        }
+        
+        @keyframes twinkle-2 {
+            0%, 100% { opacity: 0.9; filter: brightness(1.0); }
+            40% { opacity: 1; filter: brightness(1.3); }
+            70% { opacity: 0.8; filter: brightness(0.9); }
+        }
+        
+        @keyframes twinkle-3 {
+            0%, 100% { opacity: 0.8; filter: brightness(0.9); }
+            25% { opacity: 1; filter: brightness(1.2); }
+            75% { opacity: 0.7; filter: brightness(1.0); }
+        }
+        
+        @keyframes color-shift-1 {
+            0% { color: #ffb6f3; text-shadow: 0 0 5px #ff8aec, 0 0 10px #ff8aec, 0 0 15px #c651b9; }
+            33% { color: #d7a4ff; text-shadow: 0 0 5px #b85fff, 0 0 10px #b85fff, 0 0 15px #9141de; }
+            66% { color: #ff9ab2; text-shadow: 0 0 5px #ff6b8e, 0 0 10px #ff6b8e, 0 0 15px #e24a6f; }
+            100% { color: #ffb6f3; text-shadow: 0 0 5px #ff8aec, 0 0 10px #ff8aec, 0 0 15px #c651b9; }
+        }
+        
+        @keyframes color-shift-2 {
+            0% { color: #90e0ff; text-shadow: 0 0 5px #61c6ff, 0 0 10px #61c6ff, 0 0 15px #4d94ff; }
+            33% { color: #b6ffda; text-shadow: 0 0 5px #7fffbe, 0 0 10px #7fffbe, 0 0 15px #51c78d; }
+            66% { color: #d7a4ff; text-shadow: 0 0 5px #b85fff, 0 0 10px #b85fff, 0 0 15px #9141de; }
+            100% { color: #90e0ff; text-shadow: 0 0 5px #61c6ff, 0 0 10px #61c6ff, 0 0 15px #4d94ff; }
+        }
+        
+        @keyframes color-shift-3 {
+            0% { color: #ffe278; text-shadow: 0 0 5px #ffcf45, 0 0 10px #ffcf45, 0 0 15px #d99e1f; }
+            33% { color: #ff9ab2; text-shadow: 0 0 5px #ff6b8e, 0 0 10px #ff6b8e, 0 0 15px #e24a6f; }
+            66% { color: #90e0ff; text-shadow: 0 0 5px #61c6ff, 0 0 10px #61c6ff, 0 0 15px #4d94ff; }
+            100% { color: #ffe278; text-shadow: 0 0 5px #ffcf45, 0 0 10px #ffcf45, 0 0 15px #d99e1f; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景星空容器 -->
+    <div class="starry-background" id="starry-background"></div>
+    
+    <!-- 星星容器会动态创建 -->
+    <div id="stars-wrapper"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 创建背景星空
+            createStarryBackground();
+            
+            // 创建流星
+            createMeteorShower();
+            
+            // 修改星星配置生成逻辑，确保所有星星都在页面内，且使用所有文字组
+            const starsConfig = (() => {
+                // 创建网格并确定可用区域
+                const marginPercent = 0.15; // 增加安全边距
+                const minX = window.innerWidth * marginPercent;
+                const maxX = window.innerWidth * (1 - marginPercent);
+                const minY = window.innerHeight * marginPercent;
+                const maxY = window.innerHeight * (1 - marginPercent);
+                const availWidth = maxX - minX;
+                const availHeight = maxY - minY;
+                
+                // 不同大小的星星配置
+                const sizes = [
+                    { scale: 1, minDistance: 380 },    // 大星星，稍微减小间距
+                    { scale: 0.7, minDistance: 320 },  // 中等星星，稍微减小间距
+                    { scale: 0.5, minDistance: 260 }   // 小星星，稍微减小间距
+                ];
+                
+                // 星星文字配置
+                const letterSets = [
+                    ['小', 'xia','米'],
+                    ['川', '川'],
+                    ['随', '安'],
+                    ['长', '卿'],
+                    ['M', 'M'],
+                    ['橙','呈'], 
+                ];
+                
+                // 跟踪已使用的文字集
+                const usedLetterSetIndices = new Set();
+                
+                // 随机选择位置
+                const positions = [];
+                const configs = [];
+                
+                // 确保至少有一个主星星较大，并且在中心
+                const mainStarSize = sizes[0];
+                const mainStarX = minX + availWidth * 0.5; // 精确放在中心区域
+                const mainStarY = minY + availHeight * 0.5; // 精确放在中心区域
+                positions.push({ x: mainStarX, y: mainStarY, minDistance: mainStarSize.minDistance });
+                usedLetterSetIndices.add(0); // 标记第一组文字已使用
+                configs.push({
+                    centerX: mainStarX,
+                    centerY: mainStarY,
+                    scale: mainStarSize.scale,
+                    letters: letterSets[0]
+                });
+                
+                // 强制使用所有剩余的文字组
+                for (let i = 1; i < letterSets.length; i++) {
+                    let placed = false;
+                    let attempts = 0;
+                    const maxAttemptsPerStar = 100;
+                    
+                    // 为当前文字组选择一个合适的大小
+                    const sizeIndex = i <= 2 ? 1 : 2; // 第2-3组用中等大小，其余用小星星
+                    const sizeConfig = sizes[sizeIndex];
+                    
+                    // 尝试找到一个可行的位置
+                    while (!placed && attempts < maxAttemptsPerStar) {
+                        attempts++;
+                        
+                        // 完全随机位置，但确保在可见区域内
+                        const x = minX + Math.random() * availWidth;
+                        const y = minY + Math.random() * availHeight;
+                        
+                        // 检查是否与现有星星重叠
+                        let tooClose = false;
+                        for (const pos of positions) {
+                            const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
+                            // 逐渐减小最小距离要求，确保所有星星都能放置
+                            const minRequired = (pos.minDistance + sizeConfig.minDistance) / 2 * (1.0 + (1 - attempts / maxAttemptsPerStar) * 0.2);
+                            if (distance < minRequired) {
+                                tooClose = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!tooClose) {
+                            positions.push({ x, y, minDistance: sizeConfig.minDistance });
+                            usedLetterSetIndices.add(i);
+                            configs.push({
+                                centerX: x,
+                                centerY: y,
+                                scale: sizeConfig.scale * (0.9 + Math.random() * 0.2),
+                                letters: letterSets[i]
+                            });
+                            placed = true;
+                        }
+                    }
+                    
+                    // 如果实在找不到位置，则减少间距要求，强制放置
+                    if (!placed) {
+                        console.warn(`无法为文字组 ${i} (${letterSets[i]}) 找到合适位置，强制放置`);
+                        
+                        // 找一个距离其他星星最远的位置
+                        let bestX = minX + Math.random() * availWidth;
+                        let bestY = minY + Math.random() * availHeight;
+                        let maxMinDistance = 0;
+                        
+                        for (let attempt = 0; attempt < 50; attempt++) {
+                            const testX = minX + Math.random() * availWidth;
+                            const testY = minY + Math.random() * availHeight;
+                            
+                            // 计算到所有现有星星的最小距离
+                            let minDistance = Number.MAX_VALUE;
+                            for (const pos of positions) {
+                                const distance = Math.sqrt(Math.pow(testX - pos.x, 2) + Math.pow(testY - pos.y, 2));
+                                minDistance = Math.min(minDistance, distance);
+                            }
+                            
+                            if (minDistance > maxMinDistance) {
+                                maxMinDistance = minDistance;
+                                bestX = testX;
+                                bestY = testY;
+                            }
+                        }
+                        
+                        positions.push({ x: bestX, y: bestY, minDistance: sizeConfig.minDistance / 2 });
+                        usedLetterSetIndices.add(i);
+                        configs.push({
+                            centerX: bestX,
+                            centerY: bestY,
+                            scale: sizeConfig.scale * 0.9, // 稍微缩小强制放置的星星
+                            letters: letterSets[i]
+                        });
+                    }
+                }
+                
+                // 输出调试信息，帮助识别问题
+                console.log("生成的星星配置:", configs);
+                console.log("使用的文字组索引:", Array.from(usedLetterSetIndices));
+                configs.forEach((config, i) => {
+                    console.log(`星星 ${i}:`, config.letters, "位置:", config.centerX, config.centerY);
+                });
+                
+                return configs;
+            })();
+            
+            // 为每个配置创建一个星星
+            starsConfig.forEach((config, index) => {
+                createStar(config, index);
+            });
+            
+            // 创建五角星函数
+            // 修改createStar函数，添加颜色主题
+            function createStar(config, index) {
+                const { centerX, centerY, scale, letters } = config;
+                
+                // 创建星星容器
+                const starsWrapper = document.getElementById('stars-wrapper');
+                const container = document.createElement('div');
+                container.className = 'star-container';
+                container.id = `star-container-${index}`;
+                starsWrapper.appendChild(container);
+                
+                // 生成星星点
+                const starPoints = generateStarPoints(scale);
+                
+                // 根据缩放比例调整粒子数量
+                const totalParticles = Math.floor(520 * scale);
+                
+                // 为这颗星星选择一个固定的颜色主题
+                // 根据索引分配颜色，确保每颗星星颜色不同
+                const starTheme = (index % 6) + 1; // 1-6之间的颜色主题
+                const colorClass = `color-theme-${starTheme}`;
+                
+                const particles = [];
+                for (let i = 0; i < totalParticles; i++) {
+                    const particle = document.createElement('span');
+                    particle.className = 'text-particle';
+                    particle.textContent = letters[Math.floor(Math.random() * letters.length)];
+                    
+                    // 设置初始位置 - 从底部上来
+                    const startX = Math.random() * window.innerWidth;
+                    const startY = window.innerHeight + 20; // 从屏幕底部再往下一点开始
+                    
+                    particle.style.left = `${startX}px`;
+                    particle.style.top = `${startY}px`;
+                    
+                    // 为所有粒子添加相同的颜色类
+                    particle.classList.add(colorClass);
+                    
+                    // 设置目标位置
+                    const targetPoint = starPoints[i % starPoints.length];
+                    
+                    particles.push({
+                        element: particle,
+                        startX,
+                        startY,
+                        targetX: centerX + targetPoint.x,
+                        targetY: centerY + targetPoint.y,
+                        progress: 0,
+                        speed: 0.85 + Math.random() * 1.2, // 提高基础速度，但不要太极端
+                        delay: Math.random() * 1500, // 减少延迟时间
+                        colorShiftType: starTheme // 保存颜色变化类型与星星主题一致
+                    });
+                    
+                    container.appendChild(particle);
+                }
+                
+                // 设置动画
+                animateStarWithColor(particles, starTheme);
+            }
+
+            // 修改星星动画函数，使用更平衡的缓动效果
+            function animateStarWithColor(particles, colorTheme) {
+                let animationStartTime = Date.now();
+                
+                function animate() {
+                    const currentTime = Date.now();
+                    const elapsedTime = currentTime - animationStartTime;
+                    
+                    particles.forEach(particle => {
+                        if (elapsedTime < particle.delay) return;
+                        
+                        // 提高基础速度，但保持一定的进度计算
+                        particle.progress += particle.speed / 1000; 
+                        
+                        if (particle.progress >= 1) {
+                            particle.element.style.left = `${particle.targetX}px`;
+                            particle.element.style.top = `${particle.targetY}px`;
+                            particle.element.style.opacity = '1';
+                            if (!particle.twinkling) {
+                                // 闪烁动画可以不同，但颜色变化动画与星星主题一致
+                                const twinkleType = Math.ceil(Math.random() * 3);
+                                const twinkleDuration = 2 + Math.random() * 4; // 2-6秒
+                                const colorShiftDuration = 8 + Math.random() * 6; // 8-14秒
+                                
+                                // 应用双重动画：闪烁 + 颜色变化
+                                particle.element.style.animation = 
+                                    `twinkle-${twinkleType} ${twinkleDuration}s infinite, 
+                                     color-shift-${colorTheme} ${colorShiftDuration}s infinite`;
+                                
+                                particle.twinkling = true;
+                            }
+                        } else {
+                            // 使用easeOutCubic缓动函数 - 比easeOutQuad更流畅，但仍有减速效果
+                            const easeProgress = easeOutCubic(particle.progress);
+                            
+                            const currentX = particle.startX + (particle.targetX - particle.startX) * easeProgress;
+                            const currentY = particle.startY + (particle.targetY - particle.startY) * easeProgress;
+                            
+                            particle.element.style.left = `${currentX}px`;
+                            particle.element.style.top = `${currentY}px`;
+                            particle.element.style.opacity = easeProgress.toString();
+                        }
+                    });
+                    
+                    requestAnimationFrame(animate);
+                }
+                
+                animate();
+            }
+
+            // 新的缓动函数 - easeOutCubic，比easeOutQuad更平滑但保留减速感
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+            
+            // 生成五角星点
+            function generateStarPoints(scale = 1) {
+                const points = [];
+                const numPoints = 5;
+                const outerRadius = 140 * scale;
+                const innerRadius = 55 * scale;
+                const rotationOffset = -Math.PI / 2; 
+                
+                // 生成星星轮廓点
+                const outlinePoints = [];
+                for (let i = 0; i < numPoints * 2; i++) {
+                    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                    const angle = rotationOffset + (Math.PI / numPoints) * i;
+                    
+                    const point = {
+                        x: Math.cos(angle) * radius,
+                        y: Math.sin(angle) * radius
+                    };
+                    
+                    points.push(point);
+                    outlinePoints.push(point);
+                }
+                
+                // 轮廓线上的点
+                const outlineExtraPoints = Math.floor(150 * scale);
+                for (let i = 0; i < outlineExtraPoints; i++) {
+                    const edgeIndex = Math.floor(Math.random() * (numPoints * 2));
+                    const startPoint = outlinePoints[edgeIndex];
+                    const endPoint = outlinePoints[(edgeIndex + 1) % (numPoints * 2)];
+                    
+                    const t = Math.random();
+                    const x = startPoint.x + t * (endPoint.x - startPoint.x);
+                    const y = startPoint.y + t * (endPoint.y - startPoint.y);
+                    
+                    points.push({ x, y });
+                }
+                
+                // 填充内部区域
+                const fillingPoints = [];
+                
+                // 三角形填充
+                const triangleFillingPoints = Math.floor(300 * scale);
+                for (let i = 0; i < triangleFillingPoints; i++) {
+                    const triangleIndex = Math.floor(Math.random() * (numPoints * 2));
+                    const point1 = {x: 0, y: 0};
+                    const point2 = outlinePoints[triangleIndex];
+                    const point3 = outlinePoints[(triangleIndex + 1) % (numPoints * 2)];
+                    
+                    const r1 = Math.random();
+                    const r2 = Math.random();
+                    
+                    const sqrtR1 = Math.sqrt(r1);
+                    const u = 1 - sqrtR1;
+                    const v = sqrtR1 * (1 - r2);
+                    const w = sqrtR1 * r2;
+                    
+                    const x = u * point1.x + v * point2.x + w * point3.x;
+                    const y = u * point1.y + v * point2.y + w * point3.y;
+                    
+                    fillingPoints.push({ x, y });
+                }
+                
+                // 中心区域点
+                const centerPoints = Math.floor(70 * scale);
+                for (let i = 0; i < centerPoints; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.sqrt(Math.random()) * innerRadius * 0.5;
+                    
+                    fillingPoints.push({
+                        x: Math.cos(angle) * radius,
+                        y: Math.sin(angle) * radius
+                    });
+                }
+                
+                return [...points, ...fillingPoints];
+            }
+            
+            // 创建背景星空
+            function createStarryBackground() {
+                // 原有背景星空代码
+                const background = document.getElementById('starry-background');
+                
+                // 创建小星星
+                const starCount = Math.floor((window.innerWidth * window.innerHeight) / 5000);
+                
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'tiny-star';
+                    
+                    // 随机位置
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    
+                    const size = Math.random() * 1.5 + 0.5;
+                    
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    
+                    // 随机闪烁动画
+                    const duration = 3 + Math.random() * 7;
+                    const delay = Math.random() * 10;
+                    star.style.animation = `tinyTwinkle ${duration}s infinite ${delay}s`;
+                    
+                    // 颜色
+                    const hue = Math.random() * 60 + 190;
+                    const saturation = Math.random() * 30 + 10;
+                    const lightness = Math.random() * 20 + 80;
+                    
+                    star.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    star.style.boxShadow = `0 0 ${size * 2}px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    
+                    background.appendChild(star);
+                }
+            }
+            
+            // 创建流星雨
+            function createMeteorShower() {
+                // 原有流星代码
+                const background = document.getElementById('starry-background');
+                
+                function createMeteor() {
+                    if (Math.random() > 0.6) {
+                        setTimeout(createMeteor, Math.random() * 3000 + 2000);
+                        return;
+                    }
+                    
+                    // 创建流星代码...
+                    const meteor = document.createElement('div');
+                    meteor.className = 'meteor';
+                    
+                    // 流星参数
+                    const width = Math.random() * 120 + 80;
+                    const angle = Math.random() * 10 + 45;
+                    
+                    // 起始位置 - 从屏幕上方或左侧开始
+                    const startFromTop = Math.random() > 0.5;
+                    let x, y;
+                    
+                    if (startFromTop) {
+                        x = Math.random() * window.innerWidth;
+                        y = -20;
+                    } else {
+                        x = -20;
+                        y = Math.random() * (window.innerHeight / 2);
+                    }
+                    
+                    meteor.style.left = `${x}px`;
+                    meteor.style.top = `${y}px`;
+                    meteor.style.width = `${width}px`;
+                    meteor.style.height = '1.5px';
+                    meteor.style.transform = `rotate(${angle}deg)`;
+                    
+                    // 颜色
+                    const hue = Math.random() > 0.7 ? Math.random() * 60 + 190 : 220;
+                    const saturation = Math.random() * 30 + 10;
+                    const lightness = 90 + Math.random() * 10;
+                    
+                    meteor.style.background = `linear-gradient(45deg, 
+                                          rgba(255,255,255,0) 0%, 
+                                          hsl(${hue}, ${saturation}%, ${lightness}%) 50%, 
+                                          rgba(255,255,255,0) 100%)`;
+                    
+                    meteor.style.boxShadow = `0 0 5px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    
+                    background.appendChild(meteor);
+                    
+                    // 计算终点位置
+                    const distance = Math.max(window.innerWidth, window.innerHeight) * 1.5;
+                    const radianAngle = angle * Math.PI / 180;
+                    
+                    // 动画
+                    const animationDuration = Math.random() * 1500 + 6000;
+                    
+                    const animation = meteor.animate([
+                        { opacity: 0, transform: `rotate(${angle}deg) translateX(0)` },
+                        { opacity: 1, transform: `rotate(${angle}deg) translateX(30px)`, offset: 0.05 },
+                        { opacity: 1, transform: `rotate(${angle}deg) translateX(${distance * 0.7}px)`, offset: 0.8 },
+                        { opacity: 0, transform: `rotate(${angle}deg) translateX(${distance}px)` }
+                    ], {
+                        duration: animationDuration,
+                        easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+                        fill: 'forwards'
+                    });
+                    
+                    // 完成后移除
+                    animation.onfinish = () => {
+                        background.removeChild(meteor);
+                    };
+                    
+                    // 安排下一个流星
+                    setTimeout(createMeteor, Math.random() * 7000 + 2000);
+                }
+                
+                // 延迟开始流星
+                setTimeout(() => {
+                    createMeteor();
+                    setTimeout(createMeteor, 1500);
+                }, 1500);
+            }
+        });
+    </script>
+</body>
+</html>
